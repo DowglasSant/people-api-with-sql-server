@@ -45,6 +45,9 @@ The design allows easy replacement of infrastructure (e.g., database) without af
 - Spring Boot
 - Spring Data JPA
 - SQL Server
+- Keycloak
+- Swagger
+- Spring Boot Actuator
 - Lombok
 - Jakarta Validation
 - Maven
