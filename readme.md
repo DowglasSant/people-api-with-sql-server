@@ -164,4 +164,4 @@ mvn test
 src/test/java/com/santana/dowglas/sql_server_application
 ```
 
-### This ensures that both the business logic and API endpoints work as expected before deploying the application.
+This ensures that both the business logic and API endpoints work as expected before deploying the application.
