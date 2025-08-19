@@ -41,13 +41,15 @@ The design allows easy replacement of infrastructure (e.g., database) without af
 
 ## Technologies
 
-- Java 17
+- Java 21
 - Spring Boot
 - Spring Data JPA
 - SQL Server
 - Lombok
 - Jakarta Validation
 - Maven
+- JUnit 5
+- Mockito
 
 ---
 
@@ -141,3 +143,25 @@ mvn spring-boot:run
 ```bash
 http://localhost:8080/api/people
 ```
+
+## Tests
+
+This project includes **unit tests** for both the **service** and **controller** layers, implemented using **JUnit 5** and **Mockito**.
+
+- **Service tests**: Validate business logic by mocking repository interactions.
+- **Controller tests**: Validate REST endpoints using **MockMvc**, mocking service and mapper layers to test request handling and responses.
+
+### Run tests
+
+Execute all tests with Maven:
+
+```bash
+mvn test
+```
+### All tests are located under:
+
+```bash
+src/test/java/com/santana/dowglas/sql_server_application
+```
+
+### This ensures that both the business logic and API endpoints work as expected before deploying the application.
