@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EnderecoDTO {
-    private String cidade;
-    private String estado;
-    private String pais;
-    private String bairro;
-    private String cep;
-    private String numeroResidencia;
+public class AddressDTO {
+    private String city;
+    private String state;
+    private String country;
+    private String neighborhood;
+    private String zipcode;
+    private String houseNumber;
 }

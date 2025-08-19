@@ -11,11 +11,12 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PessoaResponseDTO {
+public class PersonResponseDTO {
     private Integer id;
-    private String cpf;
+    private String name;
+    private String cpfNumber;
     private String email;
-    private LocalDate dataNascimento;
-    private String telefone;
-    private EnderecoDTO endereco;
+    private LocalDate birthDate;
+    private String phone;
+    private AddressDTO address;
 }

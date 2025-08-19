@@ -1,6 +1,5 @@
 package com.santana.dowglas.sql_server_application.application.dto;
 
-import com.santana.dowglas.sql_server_application.application.dto.EnderecoDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,18 +13,22 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PessoaRequestDTO {
+public class PersonRequestDTO {
+
     @NotBlank
-    private String cpf;
+    private String name;
+
+    @NotBlank
+    private String cpfNumber;
 
     @NotBlank
     private String email;
 
     @NotNull
-    private LocalDate dataNascimento;
+    private LocalDate birthDate;
 
     @NotBlank
-    private String telefone;
+    private String phone;
 
-    private EnderecoDTO endereco;
+    private AddressDTO address;
 }
