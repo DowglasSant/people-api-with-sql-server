@@ -13,6 +13,8 @@ public interface PersonRepositoryPort {
 
     Optional<Person> findByCpfNumber(String cpfNumber);
 
+    Optional<Person> findByEmail(String email);
+
     List<Person> findByAddressCity(String city);
 
     Person save(Person person);

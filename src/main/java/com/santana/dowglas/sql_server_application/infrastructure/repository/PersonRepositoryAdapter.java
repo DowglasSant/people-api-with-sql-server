@@ -35,6 +35,11 @@ public class PersonRepositoryAdapter implements PersonRepositoryPort {
     }
 
     @Override
+    public Optional<Person> findByEmail(String email) {
+        return springDataRepository.findByEmail(email);
+    }
+
+    @Override
     public Person save(Person person) {
         return springDataRepository.save(person);
     }

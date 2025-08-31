@@ -1,5 +1,6 @@
 package com.santana.dowglas.sql_server_application.infrastructure.controller;
 
+import com.santana.dowglas.sql_server_application.application.dto.ErrorResponseDTO;
 import com.santana.dowglas.sql_server_application.application.dto.PersonRequestDTO;
 import com.santana.dowglas.sql_server_application.application.dto.PersonResponseDTO;
 import com.santana.dowglas.sql_server_application.application.mapper.PersonMapper;
@@ -32,10 +33,15 @@ public class PersonController {
             @ApiResponse(responseCode = "200", description = "List of persons retrieved successfully")
     })
     @GetMapping
-    public ResponseEntity<List<PersonResponseDTO>> getAllPersons() {
+    public ResponseEntity<?> getAllPersons() {
         log.info("Request received: get all persons");
-        List<PersonResponseDTO> personsDto = personMapper.toResponseDtoList(personService.getAllPersons());
-        return ResponseEntity.ok(personsDto);
+        try {
+            List<PersonResponseDTO> personsDto = personMapper.toResponseDtoList(personService.getAllPersons());
+            return ResponseEntity.ok(personsDto);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO("Unexpected error: " + e.getMessage()));
+        }
     }
 
     @Operation(summary = "Get person by ID", description = "Retrieve a person by their unique ID")
@@ -44,7 +50,7 @@ public class PersonController {
             @ApiResponse(responseCode = "404", description = "Person not found")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<PersonResponseDTO> getPersonById(
+    public ResponseEntity<?> getPersonById(
             @Parameter(description = "ID of the person to be retrieved", required = true)
             @PathVariable Integer id) {
         log.info("Request received: get person by id {}", id);
@@ -53,7 +59,8 @@ public class PersonController {
             return ResponseEntity.ok(personMapper.toResponseDto(person));
         } catch (RuntimeException e) {
             log.error("Error getting person by id {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDTO("Person not found for id: " + id));
         }
     }
 
@@ -63,13 +70,21 @@ public class PersonController {
             @ApiResponse(responseCode = "404", description = "Person not found")
     })
     @GetMapping("/cpf/{cpfNumber}")
-    public ResponseEntity<PersonResponseDTO> getPersonByCpf(
+    public ResponseEntity<?> getPersonByCpf(
             @Parameter(description = "CPF number of the person", required = true)
             @PathVariable String cpfNumber) {
         log.info("Request received: get person by cpfNumber {}", cpfNumber);
-        Person person = personService.getPersonByCpf(cpfNumber);
-        if (person == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        return ResponseEntity.ok(personMapper.toResponseDto(person));
+        try {
+            Person person = personService.getPersonByCpf(cpfNumber);
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ErrorResponseDTO("Person not found for CPF: " + cpfNumber));
+            }
+            return ResponseEntity.ok(personMapper.toResponseDto(person));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO("Unexpected error: " + e.getMessage()));
+        }
     }
 
     @Operation(summary = "Get persons by city", description = "Retrieve all persons living in a specific city")
@@ -77,46 +92,62 @@ public class PersonController {
             @ApiResponse(responseCode = "200", description = "List of persons retrieved successfully")
     })
     @GetMapping("/city/{city}")
-    public ResponseEntity<List<PersonResponseDTO>> getPersonsByCity(
+    public ResponseEntity<?> getPersonsByCity(
             @Parameter(description = "City to filter persons", required = true)
             @PathVariable String city) {
         log.info("Request received: get persons by city {}", city);
-        List<PersonResponseDTO> personsDto = personMapper.toResponseDtoList(personService.getPersonsByCity(city));
-        return ResponseEntity.ok(personsDto);
+        try {
+            List<PersonResponseDTO> personsDto = personMapper.toResponseDtoList(personService.getPersonsByCity(city));
+            return ResponseEntity.ok(personsDto);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO("Unexpected error: " + e.getMessage()));
+        }
     }
 
     @Operation(summary = "Create a new person", description = "Create a new person along with their address")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Person created successfully")
+            @ApiResponse(responseCode = "201", description = "Person created successfully"),
+            @ApiResponse(responseCode = "409", description = "Conflict - email or CPF already in use")
     })
     @PostMapping
-    public ResponseEntity<PersonResponseDTO> createPerson(
-            @Parameter(description = "Person information for creation", required = true)
-            @Valid @RequestBody PersonRequestDTO dto) {
+    public ResponseEntity<?> createPerson(@Valid @RequestBody PersonRequestDTO dto) {
         log.info("Request received: create person");
-        Person newPerson = personService.createPerson(dto);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(personMapper.toResponseDto(newPerson));
+        try {
+            Person newPerson = personService.createPerson(dto);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(personMapper.toResponseDto(newPerson));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponseDTO(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO("Unexpected error: " + e.getMessage()));
+        }
     }
 
     @Operation(summary = "Update an existing person", description = "Update details of a person by ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Person updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Person not found")
+            @ApiResponse(responseCode = "404", description = "Person not found"),
+            @ApiResponse(responseCode = "409", description = "Conflict - email or CPF already in use")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<PersonResponseDTO> updatePerson(
-            @Parameter(description = "ID of the person to update", required = true)
-            @PathVariable Integer id,
-            @Parameter(description = "Updated person information", required = true)
-            @Valid @RequestBody PersonRequestDTO dto) {
+    public ResponseEntity<?> updatePerson(@PathVariable Integer id,
+                                          @Valid @RequestBody PersonRequestDTO dto) {
         log.info("Request received: update person id {}", id);
         try {
             Person updatedPerson = personService.updatePerson(id, dto);
             return ResponseEntity.ok(personMapper.toResponseDto(updatedPerson));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponseDTO(e.getMessage()));
         } catch (RuntimeException e) {
-            log.error("Error updating person id {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDTO("Person not found for id: " + id));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO("Unexpected error: " + e.getMessage()));
         }
     }
 
@@ -126,7 +157,7 @@ public class PersonController {
             @ApiResponse(responseCode = "404", description = "Person not found")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePerson(
+    public ResponseEntity<?> deletePerson(
             @Parameter(description = "ID of the person to delete", required = true)
             @PathVariable Integer id) {
         log.info("Request received: delete person id {}", id);
@@ -134,8 +165,11 @@ public class PersonController {
             personService.deletePerson(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            log.error("Error deleting person id {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDTO("Person not found for id: " + id));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO("Unexpected error: " + e.getMessage()));
         }
     }
 }

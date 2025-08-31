@@ -50,6 +50,16 @@ public class PersonService {
         Person person = personMapper.toEntity(dto);
         person.setCpfNumber(CpfUtils.cleanCpf(person.getCpfNumber()));
 
+        if (personRepository.findByEmail(person.getEmail()).isPresent()) {
+            log.error("This email is currently in use.");
+            throw new IllegalArgumentException("Email already in use");
+        }
+
+        if (personRepository.findByCpfNumber(person.getCpfNumber()).isPresent()) {
+            log.error("This CPF is currently in use.");
+            throw new IllegalArgumentException("CPF already in use");
+        }
+
         if (person.getAddress() != null) {
             person.getAddress().setPerson(person);
         }
@@ -61,7 +71,25 @@ public class PersonService {
         Person existingPerson = getPersonById(id);
         Person updatedPerson = personMapper.toEntity(dto);
 
-        updatedPerson.setCpfNumber(CpfUtils.cleanCpf(updatedPerson.getCpfNumber()));
+        String newEmail = dto.getEmail();
+        String newCpf = CpfUtils.cleanCpf(dto.getCpfNumber());
+
+        if (!existingPerson.getEmail().equalsIgnoreCase(newEmail)) {
+            if (personRepository.findByEmail(newEmail).isPresent()) {
+                log.error("This email is currently in use.");
+                throw new IllegalArgumentException("Email already in use");
+            }
+        }
+
+        if (!existingPerson.getCpfNumber().equals(newCpf)) {
+            if (personRepository.findByCpfNumber(newCpf).isPresent()) {
+                log.error("This CPF is currently in use.");
+                throw new IllegalArgumentException("CPF already in use");
+            }
+        }
+
+        updatedPerson.setCpfNumber(newCpf);
+
         updateFields(existingPerson, updatedPerson);
 
         return personRepository.save(existingPerson);
